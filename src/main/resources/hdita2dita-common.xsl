@@ -588,34 +588,44 @@
   </xsl:template>
 
   <!-- Footnote -->
+  <!--ex. <div data-class="fn" id="id">...</div>-->
   <xsl:template match="div[@data-class = 'fn'][exists(@id)][1]" priority="3">
-    <xsl:variable name="siblings" 
-      select="self::div[@data-class = 'fn'][exists(@id)] | following-sibling::div[contains(@data-class, 'fn')][exists(@id)]"/>
+    <xsl:variable name="siblings" as="element()*"
+      select="self::div[@data-class = 'fn'][exists(@id)] | following-sibling::div[@data-class = 'fn'][exists(@id)]"/>
+    <!--if parent is not div, wrap fn with div-->
+    <xsl:variable name="has-parent-div" as="xs:boolean" select="exists(parent::div)"/>
     <xsl:variable name="fns" as="element()+" >
-      <xsl:iterate select="$siblings">
-        <fn>
+    <xsl:for-each select="$siblings">
+        <fn xmlns="">
           <xsl:apply-templates select=". except text()" mode="class"/>
           <xsl:apply-templates select="(@* except @data-class) | node()"/>
         </fn>
-        <xsl:next-iteration/>
-      </xsl:iterate>  
+      </xsl:for-each>
     </xsl:variable>
     <!-- sanitize fn position -->
     <xsl:choose>
-      <xsl:when test="exists(parent::div)">
+      <xsl:when test="$has-parent-div">
         <xsl:copy-of select="$fns"/>
       </xsl:when>
       <xsl:otherwise>
-        <div class="- topic/div ">
+        <div class="- topic/div " xmlns="">
           <xsl:copy-of select="$fns"/>
         </div>  
       </xsl:otherwise> 
     </xsl:choose>
   </xsl:template>
 
+  <!-- They are applied by div[@data-class = 'fn'][exists(@id)][1]'s 
+      xsl:for-each. So we don't need to do nothing their own templates.
+  -->
   <xsl:template match="div[@data-class = 'fn'][exists(@id)][position() gt 1]"
     priority="3"/>
-
+  <!-- <div data-class="fn"> has to be called by cross-ref.
+        If it has no id, then we ignore it.-->
+  <xsl:template match="div[@data-class = 'fn'][empty(@id)]"
+    priority="1"/>
+  
+  <!-- <span data-class="fn">...</span> -->
   <xsl:template match="span[@data-class = 'fn']" priority="3">
     <fn>
       <xsl:apply-templates select=". except text()" mode="class"/>
