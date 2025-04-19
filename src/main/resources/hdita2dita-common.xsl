@@ -587,6 +587,46 @@
     <xsl:attribute name="class">- topic/fallback </xsl:attribute>
   </xsl:template>
 
+  <!-- Footnote -->
+  <xsl:template match="div[@data-class = 'fn'][exists(@id)][1]" priority="3">
+    <xsl:variable name="siblings" 
+      select="self::div[@data-class = 'fn'][exists(@id)] | following-sibling::div[contains(@data-class, 'fn')][exists(@id)]"/>
+    <xsl:variable name="fns" as="element()+" >
+      <xsl:iterate select="$siblings">
+        <fn>
+          <xsl:apply-templates select=". except text()" mode="class"/>
+          <xsl:apply-templates select="(@* except @data-class) | node()"/>
+        </fn>
+        <xsl:next-iteration/>
+      </xsl:iterate>  
+    </xsl:variable>
+    <!-- sanitize fn position -->
+    <xsl:choose>
+      <xsl:when test="exists(parent::div)">
+        <xsl:copy-of select="$fns"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <div class="- topic/div ">
+          <xsl:copy-of select="$fns"/>
+        </div>  
+      </xsl:otherwise> 
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="div[@data-class = 'fn'][exists(@id)][position() gt 1]"
+    priority="3"/>
+
+  <xsl:template match="span[@data-class = 'fn']" priority="3">
+    <fn>
+      <xsl:apply-templates select=". except text()" mode="class"/>
+      <xsl:apply-templates select="(@* except @data-class) | node()"/>
+    </fn>
+  </xsl:template>
+ 
+  <xsl:template match="*[@data-class = 'fn']" mode="class">
+    <xsl:attribute name="class">- topic/fn </xsl:attribute> 
+  </xsl:template>
+
 <!--  <xsl:template match="controls" mode="class">-->
 <!--    <xsl:attribute name="class">- topic/controls </xsl:attribute>-->
 <!--    <xsl:attribute name="name" select="local-name()"/>-->
